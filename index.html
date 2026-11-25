@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Relación de Transmisión - Estilo Scratch</title>
+    <!-- Tailwind CSS para diseño responsivo y utilidades -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fuente Inter y Fredoka para darle un toque amigable estilo Scratch -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0d17;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        .font-scratch {
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        /* Fondo espacial estrellado inspirado en el escenario 'Stars' de Scratch */
+        .space-bg {
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            position: relative;
+        }
+
+        /* Animación de parpadeo para estrellas */
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .star {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            animation: twinkle var(--duration, 3s) infinite ease-in-out;
+            animation-delay: var(--delay, 0s);
+        }
+
+        /* Estilo de los monitores de variables de Scratch (naranja característico) */
+        .scratch-var-box {
+            background-color: #e6f0ff;
+            border: 1px solid #b3d1ff;
+            border-radius: 6px;
+            padding: 3px 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            font-family: 'Fredoka', sans-serif;
+            font-size: 0.85rem;
+            color: #1e293b;
+            user-select: none;
+            transition: transform 0.15s ease;
+        }
+
+        .scratch-var-value {
+            background-color: #ff8c1a; /* Naranja oficial de variables Scratch */
+            color: white;
+            font-weight: 600;
+            padding: 1px 10px;
+            border-radius: 4px;
+            min-width: 36px;
+            text-align: center;
+            box-shadow: inset 0 -1px 0 rgba(0,0,0,0.15);
+        }
+
+        .var-updated {
+            transform: scale(1.08);
+            box-shadow: 0 0 12px rgba(255, 140, 26, 0.8);
+        }
+
+        /* Bocadillo de diálogo estilo Scratch */
+        .scratch-bubble {
+            background: #ffffff;
+            color: #1e293b;
+            border: 3px solid #cbd5e1;
+            border-radius: 20px;
+            position: relative;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            font-family: 'Fredoka', sans-serif;
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Piquito del bocadillo apuntando hacia la hechicera */
+        .scratch-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 14px 12px 0;
+            border-style: solid;
+            border-color: #ffffff transparent transparent;
+            display: block;
+            width: 0;
+        }
+
+        .scratch-bubble::before {
+            content: '';
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 16px 14px 0;
+            border-style: solid;
+            border-color: #cbd5e1 transparent transparent;
+            display: block;
+            width: 0;
+        }
+
+        /* Caja de pregunta azul estilo Scratch ('preguntar ... y esperar') */
+        .scratch-ask-box {
+            background-color: #ffffff;
+            border: 3px solid #5cb1d6; /* Azul sensores Scratch */
+            border-radius: 14px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Animación flotante suave para la hechicera */
+        @keyframes floatWizard {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(1.5deg); }
+        }
+
+        .wizard-float {
+            animation: floatWizard 4s ease-in-out infinite;
+        }
+
+        @keyframes wandSparkle {
+            0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.9; }
+            50% { transform: scale(1.35) rotate(25deg); opacity: 1; }
+        }
+
+        .wand-star {
+            transform-origin: center;
+            animation: wandSparkle 1.8s infinite ease-in-out;
+        }
+
+        /* Bloques decorativos estilo Scratch en el panel de referencia */
+        .block-event { background-color: #ffbf00; border: 1px solid #cc9900; color: #fff; }
+        .block-var { background-color: #ff8c1a; border: 1px solid #db6e00; color: #fff; }
+        .block-looks { background-color: #9966ff; border: 1px solid #774dcb; color: #fff; }
+        .block-sensing { background-color: #5cb1d6; border: 1px solid #2e8eb8; color: #fff; }
+        .block-control { background-color: #ffab19; border: 1px solid #cf8b17; color: #fff; }
+        .block-op { background-color: #59c059; border: 1px solid #389438; color: #fff; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Barra Superior estilo Editor de Scratch -->
+    <header class="bg-[#4d97ff] text-white px-4 py-2.5 shadow-md flex flex-wrap items-center justify-between gap-3 z-20">
+        <div class="flex items-center gap-3">
+            <!-- Icono / Logo estilo Scratch -->
+            <div class="bg-white/20 p-1.5 rounded-lg flex items-center justify-center">
+                <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L14.8 8.5L22 9.3L16.5 14L18.2 21L12 17.3L5.8 21L7.5 14L2 9.3L9.2 8.5L12 2Z"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="font-scratch font-bold text-base sm:text-lg leading-tight tracking-wide">
+                    UD03_P2_RelacionTransmision
+                </h1>
+                <p class="text-xs text-blue-100 hidden sm:block">Simulador interactivo de mecanismos inspirado en Scratch</p>
+            </div>
+        </div>
+
+        <!-- Controles principales: Bandera Verde y Detener -->
+        <div class="flex items-center gap-2 bg-blue-600/50 px-3 py-1.5 rounded-xl border border-blue-400/30">
+            <button id="btn-green-flag" onclick="startScratchProgram()" 
+                class="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-scratch font-semibold px-3.5 py-1.5 rounded-lg shadow transition cursor-pointer"
+                title="Al hacer clic en bandera verde (Iniciar / Reiniciar)">
+                <!-- SVG Bandera Verde de Scratch -->
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                    <path d="M5 3V21" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="M5 4C8 2.5 11 5.5 14 4C16.5 2.8 18.5 3.5 19.5 4V13C18.5 12.5 16.5 11.8 14 13C11 14.5 8 11.5 5 13V4Z" fill="#22c55e" stroke="#ffffff" stroke-width="1.5"/>
+                </svg>
+                <span>Bandera Verde</span>
+            </button>
+
+            <button id="btn-stop" onclick="stopScratchProgram()" 
+                class="p-2 bg-rose-500/80 hover:bg-rose-500 active:scale-95 text-white rounded-lg shadow transition cursor-pointer"
+                title="Detener programa">
+                <!-- Octógono rojo de parada de Scratch -->
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- COLUMNA IZQUIERDA (7 cols): Escenario de Scratch ('Stars' + 'Wizard Girl') -->
+        <section class="lg:col-span-7 flex flex-col gap-4">
+            
+            <!-- Escenario de Scratch -->
+            <div id="scratch-stage" class="space-bg rounded-2xl border-4 border-slate-700 shadow-2xl overflow-hidden relative min-h-[480px] sm:min-h-[540px] flex flex-col justify-between p-4 select-none">
+                
+                <!-- Contenedor de estrellas generadas dinámicamente -->
+                <div id="stars-container" class="absolute inset-0 pointer-events-none"></div>
+
+                <!-- CAPA SUPERIOR DEL ESCENARIO: Monitores de las 5 variables (exactamente como en la imagen) -->
+                <div class="relative z-10 flex flex-col items-start gap-1.5 max-w-full">
+                    <div id="var-card-z1" class="scratch-var-box">
+                        <span class="font-medium">z1</span>
+                        <span id="val-z1" class="scratch-var-value">0</span>
+                    </div>
+                    <div id="var-card-z2" class="scratch-var-box">
+                        <span class="font-medium">z2</span>
+                        <span id="val-z2" class="scratch-var-value">0</span>
+                    </div>
+                    <div id="var-card-r1" class="scratch-var-box">
+                        <span class="font-medium">r1</span>
+                        <span id="val-r1" class="scratch-var-value">0</span>
+                    </div>
+                    <div id="var-card-r2" class="scratch-var-box">
+                        <span class="font-medium">r2</span>
+                        <span id="val-r2" class="scratch-var-value">0</span>
+                    </div>
+                    <div id="var-card-rt" class="scratch-var-box">
+                        <span class="font-medium">relación de transmisión</span>
+                        <span id="val-rt" class="scratch-var-value">0</span>
+                    </div>
+                </div>
+
+                <!-- CAPA CENTRAL: Bocadillo de diálogo y Hechicera ('Wizard Girl') -->
+                <div class="relative z-10 flex flex-col items-center justify-end mt-4 mb-2 flex-1">
+                    
+                    <!-- Bocadillo de texto de la Hechicera -->
+                    <div id="wizard-speech-container" class="mb-5 w-full max-w-md px-2 transition-all duration-300">
+                        <div class="scratch-bubble px-5 py-3.5 text-center">
+                            <p id="wizard-speech-text" class="text-base sm:text-lg font-medium text-slate-800 leading-snug">
+                                ¡Hola! Pulsa la <span class="text-emerald-600 font-bold">Bandera Verde</span> para empezar.
+                            </p>
+                            <!-- Barra de progreso sutil para los mensajes de 2 segundos -->
+                            <div id="speech-timer-bar" class="h-1 bg-purple-500 rounded-full mt-2 w-0 transition-all ease-linear"></div>
+                        </div>
+                    </div>
+
+                    <!-- Personaje Wizard Girl ilustrado en SVG -->
+                    <div class="wizard-float relative w-44 h-44 sm:w-52 sm:h-52 flex items-center justify-center">
+                        <svg viewBox="0 0 240 240" class="w-full h-full drop-shadow-[0_10px_15px_rgba(168,85,247,0.45)]">
+                            <!-- Aura mágica de fondo -->
+                            <circle cx="120" cy="130" r="85" fill="url(#magicAura)" opacity="0.45"/>
+                            
+                            <defs>
+                                <radialGradient id="magicAura" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stop-color="#c084fc"/>
+                                    <stop offset="100%" stop-color="#4c1d95" stop-opacity="0"/>
+                                </radialGradient>
+                                <linearGradient id="robeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#7e22ce"/>
+                                    <stop offset="100%" stop-color="#4c1d95"/>
+                                </linearGradient>
+                            </defs>
+
+                            <!-- Zapatos puntiagudos -->
+                            <path d="M90 212 Q80 222 72 218 Q78 208 92 206 Z" fill="#facc15" stroke="#1e1b4b" stroke-width="2"/>
+                            <path d="M148 212 Q158 222 166 218 Q160 208 146 206 Z" fill="#facc15" stroke="#1e1b4b" stroke-width="2"/>
+
+                            <!-- Túnica morada con estrellas amarillas (estilo Wizard Girl de Scratch) -->
+                            <path d="M88 125 L68 208 L172 208 L152 125 Z" fill="url(#robeGrad)" stroke="#1e1b4b" stroke-width="2.5" stroke-linejoin="round"/>
+                            
+                            <!-- Estrellas doradas en la túnica -->
+                            <polygon points="105,155 108,162 115,162 109,166 111,173 105,169 99,173 101,166 95,162 102,162" fill="#facc15"/>
+                            <polygon points="138,145 140,150 146,150 141,153 143,159 138,155 133,159 135,153 130,150 136,150" fill="#facc15"/>
+                            <polygon points="122,180 125,187 132,187 126,191 128,198 122,194 116,198 118,191 112,187 119,187" fill="#facc15"/>
+                            <circle cx="92" cy="188" r="2.5" fill="#fde047"/>
+                            <circle cx="152" cy="182" r="2.5" fill="#fde047"/>
+
+                            <!-- Brazo izquierdo levantado sosteniendo la varita -->
+                            <path d="M88 132 L54 102 L64 92 L96 122 Z" fill="#7e22ce" stroke="#1e1b4b" stroke-width="2.5" stroke-linejoin="round"/>
+                            <!-- Mano izquierda -->
+                            <circle cx="56" cy="96" r="7" fill="#8d5524" stroke="#1e1b4b" stroke-width="2"/>
+
+                            <!-- Varita Mágica -->
+                            <line x1="54" y1="94" x2="32" y2="62" stroke="#fef08a" stroke-width="4" stroke-linecap="round"/>
+                            <line x1="54" y1="94" x2="32" y2="62" stroke="#1e1b4b" stroke-width="1.5" stroke-linecap="round"/>
+                            <!-- Estrella brillante en la punta de la varita -->
+                            <g class="wand-star" style="transform-origin: 32px 62px;">
+                                <polygon points="32,48 35,58 45,58 37,64 40,74 32,68 24,74 27,64 19,58 29,58" fill="#fef08a" stroke="#eab308" stroke-width="1.5"/>
+                            </g>
+
+                            <!-- Brazo derecho extendido -->
+                            <path d="M152 132 L185 142 L180 154 L148 144 Z" fill="#7e22ce" stroke="#1e1b4b" stroke-width="2.5" stroke-linejoin="round"/>
+                            <!-- Mano derecha -->
+                            <circle cx="185" cy="148" r="7" fill="#8d5524" stroke="#1e1b4b" stroke-width="2"/>
+
+                            <!-- Cabello rizado oscuro detrás -->
+                            <circle cx="96" cy="95" r="16" fill="#1e1b4b"/>
+                            <circle cx="144" cy="95" r="16" fill="#1e1b4b"/>
+                            <circle cx="92" cy="110" r="14" fill="#1e1b4b"/>
+                            <circle cx="148" cy="110" r="14" fill="#1e1b4b"/>
+
+                            <!-- Cabeza / Rostro -->
+                            <circle cx="120" cy="96" r="24" fill="#8d5524" stroke="#1e1b4b" stroke-width="2.5"/>
+                            
+                            <!-- Ojos expresivos -->
+                            <ellipse cx="112" cy="94" rx="3.2" ry="4.2" fill="#ffffff"/>
+                            <circle cx="112" cy="94" r="2" fill="#0f172a"/>
+                            <ellipse cx="128" cy="94" rx="3.2" ry="4.2" fill="#ffffff"/>
+                            <circle cx="128" cy="94" r="2" fill="#0f172a"/>
+
+                            <!-- Sonrisa alegre -->
+                            <path d="M113 105 Q120 112 127 105" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+
+                            <!-- Sombrero de Maga Morado -->
+                            <ellipse cx="120" cy="76" rx="42" ry="9" fill="#6b21a8" stroke="#1e1b4b" stroke-width="2.5"/>
+                            <path d="M92 75 L118 22 L146 75 Z" fill="#7e22ce" stroke="#1e1b4b" stroke-width="2.5" stroke-linejoin="round"/>
+                            <!-- Cinta dorada y estrella en el sombrero -->
+                            <path d="M96 68 Q120 73 142 68" fill="none" stroke="#facc15" stroke-width="4"/>
+                            <polygon points="120,42 122,48 128,48 123,51 125,57 120,53 115,57 117,51 112,48 118,48" fill="#facc15"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- CAPA INFERIOR: Caja de entrada estilo Scratch ('preguntar ... y esperar') -->
+                <div id="scratch-input-container" class="relative z-20 hidden transition-all duration-200">
+                    <div class="scratch-ask-box p-3 sm:p-4">
+                        <label id="scratch-ask-label" for="scratch-user-input" class="block font-scratch font-semibold text-slate-800 text-sm sm:text-base mb-2">
+                            ¿De qué mecanismo se trata?
+                        </label>
+                        
+                        <!-- Botones de selección rápida cuando pregunta por el mecanismo (1 o 2) -->
+                        <div id="quick-choice-buttons" class="hidden grid-cols-1 sm:grid-cols-2 gap-2 mb-2.5">
+                            <button type="button" onclick="submitQuickChoice('1')" 
+                                class="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-scratch font-medium py-2 px-3 rounded-xl shadow transition cursor-pointer text-sm">
+                                <span class="bg-white text-indigo-700 font-bold w-6 h-6 rounded-full flex items-center justify-center">1</span>
+                                <span>Engranaje (dientes z1, z2)</span>
+                            </button>
+                            <button type="button" onclick="submitQuickChoice('2')" 
+                                class="flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-500 text-white font-scratch font-medium py-2 px-3 rounded-xl shadow transition cursor-pointer text-sm">
+                                <span class="bg-white text-amber-700 font-bold w-6 h-6 rounded-full flex items-center justify-center">2</span>
+                                <span>Ruedas de fricción (radios r1, r2)</span>
+                            </button>
+                        </div>
+
+                        <!-- Campo de texto clásico de Scratch con el botón azul de verificación -->
+                        <form id="scratch-ask-form" onsubmit="handleScratchInputSubmit(event)" class="flex items-center gap-2">
+                            <input type="number" step="any" id="scratch-user-input" 
+                                placeholder="Escribe tu respuesta aquí..."
+                                class="flex-1 bg-slate-100 border-2 border-slate-300 focus:border-[#5cb1d6] focus:bg-white rounded-full px-4 py-2 text-slate-900 font-medium outline-none transition"
+                                required>
+                            <button type="submit" 
+                                class="bg-[#5cb1d6] hover:bg-[#469ec4] active:scale-95 text-white p-2.5 rounded-full shadow-md transition cursor-pointer flex items-center justify-center"
+                                title="Enviar respuesta">
+                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                            </button>
+                        </form>
+                        <p id="input-error-msg" class="text-rose-600 text-xs font-semibold mt-1.5 hidden"></p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Panel de Visualización Mecánica Animada (Engranajes / Ruedas de fricción) -->
+            <div class="bg-slate-900/90 border border-slate-700/80 rounded-2xl p-4 shadow-xl">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-purple-400 animate-pulse"></span>
+                        <h2 class="font-scratch font-semibold text-slate-200 text-base">
+                            Visualización del Mecanismo en Movimiento
+                        </h2>
+                    </div>
+                    <span id="sim-badge" class="text-xs font-medium px-2.5 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                        Esperando datos...
+                    </span>
+                </div>
+
+                <!-- Canvas responsivo para dibujar y animar las dos ruedas -->
+                <div class="w-full h-52 sm:h-60 bg-slate-950/80 rounded-xl border border-slate-800 relative overflow-hidden">
+                    <canvas id="mechanism-canvas" class="w-full h-full block"></canvas>
+                </div>
+
+                <!-- Tarjeta explicativa del resultado y fórmula -->
+                <div id="formula-explanation" class="mt-3 p-3 rounded-xl bg-slate-800/70 border border-slate-700/60 text-xs sm:text-sm text-slate-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <span class="font-semibold text-purple-300">Fórmula utilizada en Scratch:</span>
+                        <span id="formula-text" class="ml-1 font-mono text-amber-300">Selecciona un mecanismo para calcular</span>
+                    </div>
+                    <div id="mechanism-behavior" class="text-slate-400 italic"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- COLUMNA DERECHA (5 cols): Bloques de Código Scratch de Referencia e Instrucciones -->
+        <aside class="lg:col-span-5 bg-slate-900/90 border border-slate-700/80 rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col gap-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div>
+                    <h2 class="font-scratch font-bold text-lg text-white flex items-center gap-2">
+                        <svg class="w-5 h-5 text-amber-400" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M4 6a2 2 0 012-2h3l1 2h8a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"/>
+                        </svg>
+                        Bloques de Scratch (Wizard Girl)
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-0.5">El bloque activo se ilumina mientras se ejecuta el programa</p>
+                </div>
+                <button onclick="skipAnimationsToggle()" id="btn-fast-mode"
+                    class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 px-2.5 py-1.5 rounded-lg transition cursor-pointer"
+                    title="Alternar velocidad de los diálogos de 2 segundos">
+                    Velocidad: <span id="speed-label" class="font-bold text-emerald-400">Normal</span>
+                </button>
+            </div>
+
+            <!-- Representación visual interactiva de los bloques de la imagen -->
+            <div class="space-y-1.5 font-scratch text-xs sm:text-[13px] select-none overflow-y-auto max-h-[600px] pr-1">
+                
+                <!-- Evento -->
+                <div id="blk-start" class="block-event px-3 py-2 rounded-t-xl rounded-br-lg font-medium shadow flex items-center gap-1.5 transition-all">
+                    <span>al hacer clic en</span>
+                    <svg class="w-4 h-4 inline" viewBox="0 0 24 24" fill="#22c55e"><path d="M5 3V21M5 4C8 2.5 11 5.5 14 4C16.5 2.8 18.5 3.5 19.5 4V13C18.5 12.5 16.5 11.8 14 13C11 14.5 8 11.5 5 13V4Z" stroke="#fff" stroke-width="2"/></svg>
+                </div>
+
+                <!-- Inicialización de variables -->
+                <div id="blk-init" class="space-y-1 transition-all rounded-lg">
+                    <div class="block-var px-3 py-1.5 rounded-md shadow">dar a <span class="bg-black/20 px-1.5 py-0.5 rounded">r1 ▾</span> el valor <span class="bg-white text-slate-800 px-2 rounded-full font-bold">0</span></div>
+                    <div class="block-var px-3 py-1.5 rounded-md shadow">dar a <span class="bg-black/20 px-1.5 py-0.5 rounded">r2 ▾</span> el valor <span class="bg-white text-slate-800 px-2 rounded-full font-bold">0</span></div>
+                    <div class="block-var px-3 py-1.5 rounded-md shadow">dar a <span class="bg-black/20 px-1.5 py-0.5 rounded">z1 ▾</span> el valor <span class="bg-white text-slate-800 px-2 rounded-full font-bold">0</span></div>
+                    <div class="block-var px-3 py-1.5 rounded-md shadow">dar a <span class="bg-black/20 px-1.5 py-0.5 rounded">z2 ▾</span> el valor <span class="bg-white text-slate-800 px-2 rounded-full font-bold">0</span></div>
+                    <div class="block-var px-3 py-1.5 rounded-md shadow">dar a <span class="bg-black/20 px-1.5 py-0.5 rounded">relación de transmisión ▾</span> el valor <span class="bg-white text-slate-800 px-2 rounded-full font-bold">0</span></div>
+                </div>
+
+                <!-- Secuencia de 4 bloques 'decir ... durante 2 segundos' -->
+                <div id="blk-say-1" class="block-looks px-3 py-1.5 rounded-md shadow transition-all">
+                    decir <span class="bg-white text-slate-800 px-2 py-0.5 rounded-full">¡Hola! ¡Empecemos!</span> durante <span class="bg-white text-slate-800 px-1.5 rounded-full">2</span> segundos
+                </div>
+                <div id="blk-say-2" class="block-looks px-3 py-1.5 rounded-md shadow transition-all">
+                    decir <span class="bg-white text-slate-800 px-2 py-0.5 rounded-full">¿De qué mecanismo se trata?</span> durante <span class="bg-white text-slate-800 px-1.5 rounded-full">2</span> segundos
+                </div>
+                <div id="blk-say-3" class="block-looks px-3 py-1.5 rounded-md shadow transition-all">
+                    decir <span class="bg-white text-slate-800 px-2 py-0.5 rounded-full">Indica 1 si se trata de un engranaje</span> durante <span class="bg-white text-slate-800 px-1.5 rounded-full">2</span> segundos
+                </div>
+                <div id="blk-say-4" class="block-looks px-3 py-1.5 rounded-md shadow transition-all">
+                    decir <span class="bg-white text-slate-800 px-2 py-0.5 rounded-full">Indica 2 si se trata de ruedas de fricción</span> durante <span class="bg-white text-slate-800 px-1.5 rounded-full">2</span> segundos
+                </div>
+
+                <!-- Preguntar mecanismo -->
+                <div id="blk-ask-mech" class="block-sensing px-3 py-1.5 rounded-md shadow transition-all">
+                    preguntar <span class="bg-white text-slate-800 px-2 py-0.5 rounded-full">¿De qué mecanismo se trata?</span> y esperar
+                </div>
+
+                <!-- Condicional 1: Engranaje (respuesta = 1) -->
+                <div id="blk-if-1" class="block-control p-2 rounded-lg shadow space-y-1.5 transition-all">
+                    <div class="flex items-center gap-1.5 font-semibold">
+                        <span>si</span>
+                        <span class="block-op px-2 py-0.5 rounded-full text-xs">
+                            <span class="block-sensing px-1.5 rounded-full">respuesta</span> = <span class="bg-white text-slate-800 px-1.5 rounded-full">1</span>
+                        </span>
+                        <span>entonces</span>
+                    </div>
+                    <div class="pl-3 space-y-1 border-l-4 border-amber-600/40">
+                        <div id="blk-1-z1" class="block-sensing px-2.5 py-1 rounded">preguntar <span class="bg-white text-slate-800 px-1.5 rounded-full">¿Cuál es el número de dientes de la rueda motriz?</span> y esperar</div>
+                        <div class="block-var px-2.5 py-1 rounded">dar a <span class="bg-black/20 px-1 rounded">z1 ▾</span> el valor <span class="block-sensing px-1.5 rounded-full">respuesta</span></div>
+                        <div id="blk-1-z2" class="block-sensing px-2.5 py-1 rounded">preguntar <span class="bg-white text-slate-800 px-1.5 rounded-full">¿Cuál es el número de dientes de la rueda conducida?</span> y esperar</div>
+                        <div class="block-var px-2.5 py-1 rounded">dar a <span class="bg-black/20 px-1 rounded">z2 ▾</span> el valor <span class="block-sensing px-1.5 rounded-full">respuesta</span></div>
+                        <div id="blk-1-calc" class="block-var px-2.5 py-1 rounded">
+                            dar a <span class="bg-black/20 px-1 rounded">relación de transmisión ▾</span> el valor 
+                            <span class="block-op px-2 py-0.5 rounded-full">
+                                <span class="block-var px-1.5 rounded-full">z2</span> / <span class="block-var px-1.5 rounded-full">z1</span>
+                            </span>
+                        </div>
+                        <div id="blk-1-res" class="block-looks px-2.5 py-1 rounded">
+                            decir <span class="block-op px-1.5 py-0.5 rounded-full">unir <span class="bg-white text-slate-800 px-1.5 rounded-full">La relación de transmisión es </span> <span class="block-var px-1.5 rounded-full">relación de transmisión</span></span> durante <span class="bg-white text-slate-800 px-1 rounded-full">2</span> segundos
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Condicional 2: Ruedas de fricción (respuesta = 2) -->
+                <div id="blk-if-2" class="block-control p-2 rounded-lg shadow space-y-1.5 transition-all">
+                    <div class="flex items-center gap-1.5 font-semibold">
+                        <span>si</span>
+                        <span class="block-op px-2 py-0.5 rounded-full text-xs">
+                            <span class="block-sensing px-1.5 rounded-full">respuesta</span> = <span class="bg-white text-slate-800 px-1.5 rounded-full">2</span>
+                        </span>
+                        <span>entonces</span>
+                    </div>
+                    <div class="pl-3 space-y-1 border-l-4 border-amber-600/40">
+                        <div id="blk-2-r1" class="block-sensing px-2.5 py-1 rounded">preguntar <span class="bg-white text-slate-800 px-1.5 rounded-full">¿Cuál es el radio de la rueda motriz?</span> y esperar</div>
+                        <div class="block-var px-2.5 py-1 rounded">dar a <span class="bg-black/20 px-1 rounded">r1 ▾</span> el valor <span class="block-sensing px-1.5 rounded-full">respuesta</span></div>
+                        <div id="blk-2-r2" class="block-sensing px-2.5 py-1 rounded">preguntar <span class="bg-white text-slate-800 px-1.5 rounded-full">¿Cuál es el radio de la rueda conducida?</span> y esperar</div>
+                        <div class="block-var px-2.5 py-1 rounded">dar a <span class="bg-black/20 px-1 rounded">r2 ▾</span> el valor <span class="block-sensing px-1.5 rounded-full">respuesta</span></div>
+                        <div id="blk-2-calc" class="block-var px-2.5 py-1 rounded">
+                            dar a <span class="bg-black/20 px-1 rounded">relación de transmisión ▾</span> el valor 
+                            <span class="block-op px-2 py-0.5 rounded-full">
+                                <span class="block-var px-1.5 rounded-full">r2</span> / <span class="block-var px-1.5 rounded-full">r1</span>
+                            </span>
+                        </div>
+                        <div id="blk-2-res" class="block-looks px-2.5 py-1 rounded">
+                            decir <span class="block-op px-1.5 py-0.5 rounded-full">unir <span class="bg-white text-slate-800 px-1.5 rounded-full">La relación de transmisión es </span> <span class="block-var px-1.5 rounded-full">relación de transmisión</span></span> durante <span class="bg-white text-slate-800 px-1 rounded-full">2</span> segundos
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Nota didáctica sobre tecnología -->
+            <div class="bg-indigo-950/60 border border-indigo-500/30 rounded-xl p-3 text-xs text-indigo-200 leading-relaxed">
+                <strong class="text-indigo-300 block mb-1">💡 Nota de Tecnología (Mecanismos):</strong>
+                Este programa sigue exactamente los bloques de tu ficha de Scratch (<code class="text-amber-300">z2 / z1</code> y <code class="text-amber-300">r2 / r1</code>, que expresa la relación entre tamaños/dientes conducida-motriz). Recuerda que en algunos libros de texto también se define la relación de velocidades como <code class="text-emerald-300">i = ω₂/ω₁ = z₁/z₂</code>.
+            </div>
+        </aside>
+
+    </main>
+
+    <script>
+        /**
+         * ESTADO GLOBAL DEL PROGRAMA (Variables de Scratch)
+         */
+        const scratchVars = {
+            z1: 0,
+            z2: 0,
+            r1: 0,
+            r2: 0,
+            rt: 0 // relación de transmisión
+        };
+
+        // Control de ejecución y pasos del flujo de Scratch
+        let executionId = 0; // Token para cancelar ejecuciones anteriores al pulsar Bandera Verde o Stop
+        let currentStep = 'IDLE'; // IDLE, ASK_MECHANISM, ASK_Z1, ASK_Z2, ASK_R1, ASK_R2, DONE
+        let fastMode = false; // Permite acelerar los diálogos de 2 segundos si el usuario lo desea
+
+        // Estado para la animación del Canvas de ruedas/engranajes
+        const simState = {
+            active: false,
+            type: null, // 'gear' (1) o 'friction' (2)
+            val1: 20,   // z1 o r1 (motriz)
+            val2: 40,   // z2 o r2 (conducida)
+            ratio: 2,   // z2/z1 o r2/r1
+            angle1: 0,
+            angle2: 0
+        };
+
+        /**
+         * INICIALIZACIÓN DE ESTRELLAS EN EL ESCENARIO ('Stars')
+         */
+        function generateStars() {
+            const container = document.getElementById('stars-container');
+            container.innerHTML = '';
+            const starCount = 75;
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                const size = Math.random() * 2.5 + 1;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.setProperty('--duration', `${Math.random() * 3 + 2}s`);
+                star.style.setProperty('--delay', `${Math.random() * 3}s`);
+                container.appendChild(star);
+            }
+        }
+
+        /**
+         * ACTUALIZACIÓN DE VARIABLES EN EL PANEL DE SCRATCH
+         */
+        function setScratchVar(name, value) {
+            // Formatear decimales limpios si no es entero
+            const formatted = Number.isInteger(value) ? value : Number(value.toFixed(4));
+            scratchVars[name] = formatted;
+
+            const elVal = document.getElementById(`val-${name}`);
+            const elCard = document.getElementById(`var-card-${name}`);
+            if (elVal) elVal.textContent = formatted;
+            if (elCard) {
+                elCard.classList.remove('var-updated');
+                void elCard.offsetWidth; // Reflow para reiniciar animación CSS
+                elCard.classList.add('var-updated');
+                setTimeout(() => elCard.classList.remove('var-updated'), 400);
+            }
+        }
+
+        function resetAllVariables() {
+            setScratchVar('r1', 0);
+            setScratchVar('r2', 0);
+            setScratchVar('z1', 0);
+            setScratchVar('z2', 0);
+            setScratchVar('rt', 0);
+        }
+
+        /**
+         * UTILIDADES VISUALES DE BLOQUES Y BOCADILLOS
+         */
+        function highlightBlock(blockId) {
+            // Quitar resaltado anterior
+            document.querySelectorAll('.ring-4').forEach(el => {
+                el.classList.remove('ring-4', 'ring-yellow-300', 'scale-[1.02]');
+            });
+            if (!blockId) return;
+            const target = document.getElementById(blockId);
+            if (target) {
+                target.classList.add('ring-4', 'ring-yellow-300', 'scale-[1.02]');
+                target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function setWizardSpeech(text, durationMs = 0) {
+            const speechEl = document.getElementById('wizard-speech-text');
+            const timerBar = document.getElementById('speech-timer-bar');
+            speechEl.innerHTML = text;
+
+            // Reiniciar barra de progreso del bocadillo
+            timerBar.style.transition = 'none';
+            timerBar.style.width = '0%';
+            void timerBar.offsetWidth;
+
+            if (durationMs > 0) {
+                timerBar.style.transition = `width ${durationMs}ms linear`;
+                timerBar.style.width = '100%';
+            }
+        }
+
+        function showInputPrompt(labelText, showMechanismChoices = false) {
+            const container = document.getElementById('scratch-input-container');
+            const label = document.getElementById('scratch-ask-label');
+            const quickBtns = document.getElementById('quick-choice-buttons');
+            const input = document.getElementById('scratch-user-input');
+            const errMsg = document.getElementById('input-error-msg');
+
+            label.textContent = labelText;
+            errMsg.classList.add('hidden');
+            input.value = '';
+
+            if (showMechanismChoices) {
+                quickBtns.classList.remove('hidden');
+                quickBtns.classList.add('grid');
+                input.placeholder = 'Escribe 1 o 2 (o pulsa un botón arriba)...';
+            } else {
+                quickBtns.classList.add('hidden');
+                quickBtns.classList.remove('grid');
+                input.placeholder = 'Introduce un valor numérico mayor que 0...';
+            }
+
+            container.classList.remove('hidden');
+            setTimeout(() => input.focus(), 50);
+        }
+
+        function hideInputPrompt() {
+            document.getElementById('scratch-input-container').classList.add('hidden');
+        }
+
+        function sleep(ms, token) {
+            const actualMs = fastMode ? Math.min(ms, 450) : ms;
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    if (token !== executionId) {
+                        reject('CANCELLED');
+                    } else {
+                        resolve();
+                    }
+                }, actualMs);
+            });
+        }
+
+        function skipAnimationsToggle() {
+            fastMode = !fastMode;
+            const label = document.getElementById('speed-label');
+            label.textContent = fastMode ? 'Rápida' : 'Normal';
+            label.className = fastMode ? 'font-bold text-amber-400' : 'font-bold text-emerald-400';
+        }
+
+        /**
+         * FLUJO PRINCIPAL DEL PROGRAMA DE SCRATCH ('Al hacer clic en bandera verde')
+         */
+        async function startScratchProgram() {
+            executionId++;
+            const myToken = executionId;
+            currentStep = 'RUNNING_INTRO';
+
+            // Reiniciar simulación visual
+            simState.active = false;
+            document.getElementById('sim-badge').textContent = 'Calculando...';
+            document.getElementById('sim-badge').className = 'text-xs font-medium px-2.5 py-1 rounded-full bg-purple-900/50 text-purple-300 border border-purple-700';
+            document.getElementById('formula-text').textContent = 'Esperando elección de mecanismo...';
+            document.getElementById('mechanism-behavior').textContent = '';
+
+            hideInputPrompt();
+
+            try {
+                // Paso 1: Inicializar las 5 variables a 0
+                highlightBlock('blk-init');
+                resetAllVariables();
+
+                const waitDuration = fastMode ? 450 : 1800;
+
+                // Paso 2: "¡Hola! ¡Empecemos!" durante 2 segundos
+                highlightBlock('blk-say-1');
+                setWizardSpeech('¡Hola! ¡Empecemos!', waitDuration);
+                await sleep(waitDuration, myToken);
+
+                // Paso 3: "¿De qué mecanismo se trata?" durante 2 segundos
+                highlightBlock('blk-say-2');
+                setWizardSpeech('¿De qué mecanismo se trata?', waitDuration);
+                await sleep(waitDuration, myToken);
+
+                // Paso 4: "Indica 1 si se trata de un engranaje" durante 2 segundos
+                highlightBlock('blk-say-3');
+                setWizardSpeech('Indica <span class="text-indigo-600 font-bold">1</span> si se trata de un <strong>engranaje</strong>', waitDuration);
+                await sleep(waitDuration, myToken);
+
+                // Paso 5: "Indica 2 si se trata de ruedas de fricción" durante 2 segundos
+                highlightBlock('blk-say-4');
+                setWizardSpeech('Indica <span class="text-amber-600 font-bold">2</span> si se trata de <strong>ruedas de fricción</strong>', waitDuration);
+                await sleep(waitDuration, myToken);
+
+                // Paso 6: Preguntar "¿De qué mecanismo se trata?" y esperar
+                highlightBlock('blk-ask-mech');
+                setWizardSpeech('¿De qué mecanismo se trata? (1 = Engranaje, 2 = Ruedas de fricción)');
+                currentStep = 'ASK_MECHANISM';
+                showInputPrompt('¿De qué mecanismo se trata?', true);
+
+            } catch (e) {
+                if (e !== 'CANCELLED') console.error(e);
+            }
+        }
+
+        function stopScratchProgram() {
+            executionId++;
+            currentStep = 'IDLE';
+            hideInputPrompt();
+            highlightBlock(null);
+            setWizardSpeech('Programa detenido. Pulsa la <span class="text-emerald-600 font-bold">Bandera Verde</span> para volver a empezar.');
+        }
+
+        /**
+         * GESTIÓN DE RESPUESTAS DEL USUARIO ('respuesta' en Scratch)
+         */
+        function submitQuickChoice(choiceStr) {
+            const input = document.getElementById('scratch-user-input');
+            input.value = choiceStr;
+            processUserAnswer(choiceStr);
+        }
+
+        function handleScratchInputSubmit(event) {
+            event.preventDefault();
+            const rawVal = document.getElementById('scratch-user-input').value.trim();
+            processUserAnswer(rawVal);
+        }
+
+        function showInputError(msg) {
+            const errMsg = document.getElementById('input-error-msg');
+            errMsg.textContent = msg;
+            errMsg.classList.remove('hidden');
+        }
+
+        async function processUserAnswer(rawVal) {
+            const num = parseFloat(rawVal);
+            const myToken = executionId;
+
+            if (isNaN(num)) {
+                showInputError('Por favor, introduce un número válido.');
+                return;
+            }
+
+            // ESTADO 1: Elegir mecanismo (1 o 2)
+            if (currentStep === 'ASK_MECHANISM') {
+                if (num !== 1 && num !== 2) {
+                    showInputError('Debes escribir 1 (engranaje) o 2 (ruedas de fricción).');
+                    return;
+                }
+
+                hideInputPrompt();
+
+                if (num === 1) {
+                    // Rama SI respuesta = 1 (Engranaje)
+                    highlightBlock('blk-1-z1');
+                    setWizardSpeech('¿Cuál es el número de dientes de la rueda motriz? (z1)');
+                    currentStep = 'ASK_Z1';
+                    showInputPrompt('¿Cuál es el número de dientes de la rueda motriz?');
+                } else {
+                    // Rama SI respuesta = 2 (Ruedas de fricción)
+                    highlightBlock('blk-2-r1');
+                    setWizardSpeech('¿Cuál es el radio de la rueda motriz? (r1)');
+                    currentStep = 'ASK_R1';
+                    showInputPrompt('¿Cuál es el radio de la rueda motriz?');
+                }
+                return;
+            }
+
+            // RAMA 1: ENGRANAJE (z1 y z2)
+            if (currentStep === 'ASK_Z1') {
+                if (num <= 0) {
+                    showInputError('El número de dientes (z1) debe ser mayor que 0.');
+                    return;
+                }
+                setScratchVar('z1', num);
+                hideInputPrompt();
+
+                highlightBlock('blk-1-z2');
+                setWizardSpeech('¿Cuál es el número de dientes de la rueda conducida? (z2)');
+                currentStep = 'ASK_Z2';
+                showInputPrompt('¿Cuál es el número de dientes de la rueda conducida?');
+                return;
+            }
+
+            if (currentStep === 'ASK_Z2') {
+                if (num <= 0) {
+                    showInputError('El número de dientes (z2) debe ser mayor que 0.');
+                    return;
+                }
+                setScratchVar('z2', num);
+                hideInputPrompt();
+
+                // Cálculo: relación de transmisión = z2 / z1
+                highlightBlock('blk-1-calc');
+                const rt = scratchVars.z2 / scratchVars.z1;
+                setScratchVar('rt', rt);
+
+                // Activar animación de engranajes
+                activateMechanismSimulation('gear', scratchVars.z1, scratchVars.z2, rt);
+
+                // Mostrar resultado final en bocadillo
+                highlightBlock('blk-1-res');
+                setWizardSpeech(`La relación de transmisión es <span class="text-orange-600 font-bold text-xl">${scratchVars.rt}</span>`);
+                currentStep = 'DONE';
+                return;
+            }
+
+            // RAMA 2: RUEDAS DE FRICCIÓN (r1 y r2)
+            if (currentStep === 'ASK_R1') {
+                if (num <= 0) {
+                    showInputError('El radio de la rueda motriz (r1) debe ser mayor que 0.');
+                    return;
+                }
+                setScratchVar('r1', num);
+                hideInputPrompt();
+
+                highlightBlock('blk-2-r2');
+                setWizardSpeech('¿Cuál es el radio de la rueda conducida? (r2)');
+                currentStep = 'ASK_R2';
+                showInputPrompt('¿Cuál es el radio de la rueda conducida?');
+                return;
+            }
+
+            if (currentStep === 'ASK_R2') {
+                if (num <= 0) {
+                    showInputError('El radio de la rueda conducida (r2) debe ser mayor que 0.');
+                    return;
+                }
+                setScratchVar('r2', num);
+                hideInputPrompt();
+
+                // Cálculo: relación de transmisión = r2 / r1
+                highlightBlock('blk-2-calc');
+                const rt = scratchVars.r2 / scratchVars.r1;
+                setScratchVar('rt', rt);
+
+                // Activar animación de ruedas de fricción
+                activateMechanismSimulation('friction', scratchVars.r1, scratchVars.r2, rt);
+
+                // Mostrar resultado final en bocadillo
+                highlightBlock('blk-2-res');
+                setWizardSpeech(`La relación de transmisión es <span class="text-orange-600 font-bold text-xl">${scratchVars.rt}</span>`);
+                currentStep = 'DONE';
+                return;
+            }
+        }
+
+        /**
+         * VISUALIZACIÓN ANIMADA EN CANVAS DE ENGRANAJES Y RUEDAS DE FRICCIÓN
+         */
+        function activateMechanismSimulation(type, val1, val2, ratio) {
+            simState.active = true;
+            simState.type = type;
+            simState.val1 = val1;
+            simState.val2 = val2;
+            simState.ratio = ratio;
+
+            const badge = document.getElementById('sim-badge');
+            const formulaText = document.getElementById('formula-text');
+            const behaviorText = document.getElementById('mechanism-behavior');
+
+            if (type === 'gear') {
+                badge.textContent = `Engranaje (z1=${val1}, z2=${val2})`;
+                badge.className = 'text-xs font-medium px-2.5 py-1 rounded-full bg-indigo-900/60 text-indigo-300 border border-indigo-600';
+                formulaText.textContent = `relación de transmisión = z2 / z1 = ${val2} / ${val1} = ${scratchVars.rt}`;
+            } else {
+                badge.textContent = `Ruedas de fricción (r1=${val1}, r2=${val2})`;
+                badge.className = 'text-xs font-medium px-2.5 py-1 rounded-full bg-amber-900/60 text-amber-300 border border-amber-600';
+                formulaText.textContent = `relación de transmisión = r2 / r1 = ${val2} / ${val1} = ${scratchVars.rt}`;
+            }
+
+            if (val2 > val1) {
+                behaviorText.textContent = 'Sistema reductor de velocidad (aumenta fuerza/par)';
+            } else if (val2 < val1) {
+                behaviorText.textContent = 'Sistema multiplicador de velocidad';
+            } else {
+                behaviorText.textContent = 'Transmisión directa (misma velocidad, sentido inverso)';
+            }
+        }
+
+        // Renderizado del Canvas responsivo
+        const canvas = document.getElementById('mechanism-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        function drawGearWheel(cx, cy, radius, teeth, angle, fillColor, strokeColor, label, sublabel) {
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(angle);
+
+            const toothDepth = Math.min(10, Math.max(5, radius * 0.14));
+            const outerR = radius + toothDepth / 2;
+            const innerR = radius - toothDepth / 2;
+
+            // Dibujar dientes del engranaje
+            ctx.beginPath();
+            const step = (Math.PI * 2) / teeth;
+            for (let i = 0; i < teeth; i++) {
+                const a0 = i * step;
+                const a1 = a0 + step * 0.25;
+                const a2 = a0 + step * 0.5;
+                const a3 = a0 + step * 0.75;
+
+                if (i === 0) {
+                    ctx.moveTo(Math.cos(a0) * innerR, Math.sin(a0) * innerR);
+                } else {
+                    ctx.lineTo(Math.cos(a0) * innerR, Math.sin(a0) * innerR);
+                }
+                ctx.lineTo(Math.cos(a1) * outerR, Math.sin(a1) * outerR);
+                ctx.lineTo(Math.cos(a2) * outerR, Math.sin(a2) * outerR);
+                ctx.lineTo(Math.cos(a3) * innerR, Math.sin(a3) * innerR);
+            }
+            ctx.closePath();
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = strokeColor;
+            ctx.stroke();
+
+            // Radios interiores decorativos para apreciar el giro
+            ctx.beginPath();
+            ctx.arc(0, 0, innerR * 0.72, 0, Math.PI * 2);
+            ctx.fillStyle = '#0f172a';
+            ctx.fill();
+            ctx.stroke();
+
+            for (let s = 0; s < 4; s++) {
+                const sa = (s * Math.PI) / 2;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(Math.cos(sa) * innerR * 0.72, Math.sin(sa) * innerR * 0.72);
+                ctx.strokeStyle = fillColor;
+                ctx.lineWidth = 4;
+                ctx.stroke();
+            }
+
+            // Eje central
+            ctx.beginPath();
+            ctx.arc(0, 0, 8, 0, Math.PI * 2);
+            ctx.fillStyle = '#f8fafc';
+            ctx.fill();
+
+            ctx.restore();
+
+            // Etiquetas debajo de la rueda
+            ctx.fillStyle = '#f8fafc';
+            ctx.font = '600 12px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(label, cx, cy + outerR + 18);
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '11px Inter, sans-serif';
+            ctx.fillText(sublabel, cx, cy + outerR + 32);
+        }
+
+        function drawFrictionWheel(cx, cy, radius, angle, fillColor, strokeColor, label, sublabel) {
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(angle);
+
+            // Rueda lisa con banda de rodadura
+            ctx.beginPath();
+            ctx.arc(0, 0, radius, 0, Math.PI * 2);
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = strokeColor;
+            ctx.stroke();
+
+            // Marcas radiales para visualizar claramente la velocidad angular
+            ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+            ctx.lineWidth = 2.5;
+            for (let i = 0; i < 6; i++) {
+                const a = (i * Math.PI) / 3;
+                ctx.beginPath();
+                ctx.moveTo(Math.cos(a) * 10, Math.sin(a) * 10);
+                ctx.lineTo(Math.cos(a) * (radius - 6), Math.sin(a) * (radius - 6));
+                ctx.stroke();
+            }
+
+            // Eje central
+            ctx.beginPath();
+            ctx.arc(0, 0, 8, 0, Math.PI * 2);
+            ctx.fillStyle = '#f8fafc';
+            ctx.fill();
+
+            ctx.restore();
+
+            // Etiquetas
+            ctx.fillStyle = '#f8fafc';
+            ctx.font = '600 12px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(label, cx, cy + radius + 18);
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '11px Inter, sans-serif';
+            ctx.fillText(sublabel, cx, cy + radius + 32);
+        }
+
+        function animateCanvas() {
+            const width = canvas.parentElement.clientWidth;
+            const height = canvas.parentElement.clientHeight;
+
+            ctx.clearRect(0, 0, width, height);
+
+            // Cuadrícula sutil técnica de fondo
+            ctx.strokeStyle = 'rgba(51, 65, 85, 0.25)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < width; x += 24) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+            }
+            for (let y = 0; y < height; y += 24) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
+            }
+
+            if (!simState.active) {
+                ctx.fillStyle = '#64748b';
+                ctx.font = '500 13px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('Completa un cálculo con Wizard Girl para ver girar las ruedas aquí', width / 2, height / 2);
+                requestAnimationFrame(animateCanvas);
+                return;
+            }
+
+            // Escalar radios proporcionalmente al canvas manteniendo límites legibles
+            const maxAvailableR = Math.min(height * 0.34, width * 0.22);
+            const minAvailableR = 24;
+            const maxVal = Math.max(simState.val1, simState.val2);
+
+            let r1Px = (simState.val1 / maxVal) * maxAvailableR;
+            let r2Px = (simState.val2 / maxVal) * maxAvailableR;
+
+            if (r1Px < minAvailableR) r1Px = minAvailableR;
+            if (r2Px < minAvailableR) r2Px = minAvailableR;
+
+            const centerY = height * 0.44;
+            const centerX = width / 2;
+            const gap = simState.type === 'gear' ? 2 : 0;
+            const totalSpan = r1Px + r2Px + gap;
+
+            const x1 = centerX - totalSpan / 2 + r1Px;
+            const x2 = x1 + r1Px + r2Px + gap;
+
+            // Velocidad angular: rueda motriz a velocidad base, conducida inversamente proporcional a z2/z1 o r2/r1
+            const baseSpeed = 0.022;
+            const speed2 = baseSpeed / (simState.ratio || 1);
+            // Limitar velocidad visual extrema para que siga siendo agradable a la vista
+            const clampedSpeed2 = Math.max(-0.14, Math.min(0.14, speed2));
+
+            simState.angle1 += baseSpeed;
+            simState.angle2 -= clampedSpeed2; // Gira en sentido contrario
+
+            if (simState.type === 'gear') {
+                const teeth1 = Math.max(8, Math.min(36, Math.round(simState.val1)));
+                const teeth2 = Math.max(8, Math.min(36, Math.round(simState.val2)));
+
+                drawGearWheel(x1, centerY, r1Px, teeth1, simState.angle1, '#6366f1', '#a5b4fc', 'Rueda Motriz', `z1 = ${simState.val1} dientes`);
+                drawGearWheel(x2, centerY, r2Px, teeth2, simState.angle2 + Math.PI / teeth2, '#ec4899', '#f9a8d4', 'Rueda Conducida', `z2 = ${simState.val2} dientes`);
+            } else {
+                drawFrictionWheel(x1, centerY, r1Px, simState.angle1, '#d97706', '#fcd34d', 'Rueda Motriz', `r1 = ${simState.val1}`);
+                drawFrictionWheel(x2, centerY, r2Px, simState.angle2, '#0d9488', '#5eead4', 'Rueda Conducida', `r2 = ${simState.val2}`);
+            }
+
+            requestAnimationFrame(animateCanvas);
+        }
+
+        // Arrancar al cargar la ventana
+        window.onload = function () {
+            generateStars();
+            resizeCanvas();
+            animateCanvas();
+            // Iniciar automáticamente el programa como al pulsar la bandera verde
+            startScratchProgram();
+        };
+    </script>
+</body>
+</html>
